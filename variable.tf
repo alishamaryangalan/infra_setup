@@ -1,11 +1,12 @@
 variable "region" {
-  type = string
+  type    = string
+  default = "us-east-1"
 }
 
-variable "profilename" {
-  type = string
+variable "profile" {
+  type    = string
   default = "dev"
-} 
+}
 
 variable "public_subnet_cidr_blocks" {
   type    = list(string)
@@ -28,4 +29,51 @@ data "aws_availability_zones" "available" {
     name   = "region-name"
     values = [var.region]
   }
+}
+variable "my_ip" {
+  type    = string
+  default = "71.192.113.253"
+}
+
+variable "webapp_port" {
+  type    = number
+  default = 3030
+}
+
+variable "ami_id" {
+  type    = string
+  default = "ami-0e42e6e7b4f8c0f00"
+}
+
+variable "aws_access_key" {
+  type    = string
+  default = ""
+}
+variable "aws_secret_key" {
+  type    = string
+  default = ""
+}
+
+variable "aws_s3_bucket_name" {
+  type    = string
+  default = "s3-bucket"
+}
+
+variable "db_username" {
+  type    = string
+  default = "csye6225"
+}
+
+variable "db_password" {
+  type    = string
+  default = "justgowithit"
+}
+variable "rds_identifier" {
+  type    = string
+  default = "csye6225"
+}
+
+variable "rds_db_name" {
+  type    = string
+  default = "webapprds"
 }

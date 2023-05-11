@@ -9,3 +9,7 @@ resource "aws_subnet" "private" {
     Name = "private-${count.index + 1}"
   }
 }
+resource "aws_db_subnet_group" "subnet_rds" {
+  name       = "aws-db-subnet-group"
+  subnet_ids = [element(aws_subnet.private.*.id, 1), element(aws_subnet.private.*.id, 2), element(aws_subnet.private.*.id, 3)]
+}

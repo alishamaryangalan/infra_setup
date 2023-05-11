@@ -28,4 +28,6 @@ resource "aws_db_instance" "rds" {
   vpc_security_group_ids  = [aws_security_group.sg_db.id]
   multi_az                = false
   db_subnet_group_name    = aws_db_subnet_group.subnet_rds.name
+  kms_key_id              = aws_kms_key.rds_encryption_key.arn
+  storage_encrypted       = true
 }

@@ -35,8 +35,12 @@ resource "aws_lb_target_group" "alb_group" {
 
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.application_load_balancer.arn
-  port              = "80"
-  protocol          = "HTTP"
+  # port              = "80"
+  # protocol          = "HTTP"
+  port            = 443
+  protocol        = "HTTPS"
+  ssl_policy      = "ELBSecurityPolicy-2016-08"
+  certificate_arn = "arn:aws:acm:us-east-1:916955218910:certificate/8ec495d2-4a3f-4489-bdde-a34a606d0345"
 
   default_action {
     target_group_arn = aws_lb_target_group.alb_group.arn

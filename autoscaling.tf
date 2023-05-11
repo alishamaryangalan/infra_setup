@@ -1,35 +1,3 @@
-# data "template_file" "user_data" {
-#   template = <<-EOF
-#     #!/bin/bash
-#     sudo chmod -R 775 /home/ec2-user/webapp
-#     printf "\n" >> /home/ec2-user/webapp/.env
-#     printf "DB_ENDPOINT = '${local.endpoint_no_port}'\n" >> /home/ec2-user/webapp/.env
-#     printf "DB_NAME = '${aws_db_instance.rds.name}'\n" >> /home/ec2-user/webapp/.env
-#     printf "DB_USERNAME = '${aws_db_instance.rds.username}'\n" >> /home/ec2-user/webapp/.env
-#     printf "DB_PASSWORD = '${aws_db_instance.rds.password}'\n" >> /home/ec2-user/webapp/.env
-#     printf "BUCKET_NAME = '${aws_s3_bucket.private_bucket.bucket}'\n" >> /home/ec2-user/webapp/.env
-#     printf "REGION = '${var.region}'\n" >> /home/ec2-user/webapp/.env
-#     printf "PORT = '3030'\n" >> /home/ec2-user/webapp/.env
-#     printf "filename = 'file'\n" >> /home/ec2-user/webapp/.env
-#     sleep 15
-#     sudo chmod 777 /home/ec2-user/webapp
-#     sudo chmod 777 /home/ec2-user/webapp/uploads
-#     # sudo systemctl enable webapp.service
-#     # sudo systemctl start webapp.service
-#     # sleep 5
-#     sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/cloudwatch-config.json -s
-#     sudo chmod 777 /home/ec2-user/webapp/logs
-#     sleep 15
-#     sudo systemctl enable webapp.service
-#     sudo systemctl start webapp.service
-#     sudo yum install polkit
-#     sudo systemctl restart amazon-cloudwatch-agent.service
-#     sleep 20
-#     sudo systemctl restart webapp.service
-#     sleep 15
-#   EOF
-# }
-
 locals {
   user_data_vars = {
     endpoint_port = local.endpoint_no_port
@@ -39,30 +7,6 @@ locals {
     bucket_name   = aws_s3_bucket.private_bucket.bucket
     region        = var.region
   }
-}
-output "endpoint_port" {
-  value = local.user_data_vars.endpoint_port
-}
-
-output "db_name" {
-  value = local.user_data_vars.db_name
-}
-
-output "db_username" {
-  value = local.user_data_vars.db_username
-}
-
-output "db_password" {
-  value     = local.user_data_vars.db_password
-  sensitive = true
-}
-
-output "bucket_name" {
-  value = local.user_data_vars.bucket_name
-}
-
-output "region" {
-  value = local.user_data_vars.region
 }
 resource "aws_launch_template" "asg_launch_template" {
   name          = "asg_launch_template"
@@ -79,13 +23,13 @@ resource "aws_launch_template" "asg_launch_template" {
   block_device_mappings {
     device_name = "/dev/xvda"
     ebs {
-      delete_on_termination = "true"
-      encrypted             = "true"
+      delete_on_termination = true
+      encrypted             = true
       volume_size           = 50
       volume_type           = "gp2"
+      kms_key_id            = aws_kms_key.ebs.arn
     }
   }
-  # user_data = base64encode(data.template_file.user_data.rendered)
   user_data = base64encode(templatefile("${path.module}/user_data.tpl",
     {
       DB_ENDPOINT = "${local.endpoint_no_port}"
@@ -100,64 +44,9 @@ resource "aws_launch_template" "asg_launch_template" {
     create_before_destroy = true
   }
 }
-
-# resource "aws_launch_configuration" "asg_launch_config" {
-#   name                        = "asg_launch_config"
-#   image_id                    = var.ami_id
-#   instance_type               = "t2.micro"
-#   key_name                    = "ec2"
-#   associate_public_ip_address = true
-#   user_data                   = <<-EOF
-#     #!/bin/bash
-#     sudo chmod -R 775 /home/ec2-user/webapp
-#     printf "\n" >> /home/ec2-user/webapp/.env
-#     printf "DB_ENDPOINT = '${local.endpoint_no_port}'\n" >> /home/ec2-user/webapp/.env
-#     printf "DB_NAME = '${aws_db_instance.rds.name}'\n" >> /home/ec2-user/webapp/.env
-#     printf "DB_USERNAME = '${aws_db_instance.rds.username}'\n" >> /home/ec2-user/webapp/.env
-#     printf "DB_PASSWORD = '${aws_db_instance.rds.password}'\n" >> /home/ec2-user/webapp/.env
-#     printf "BUCKET_NAME = '${aws_s3_bucket.private_bucket.bucket}'\n" >> /home/ec2-user/webapp/.env
-#     printf "REGION = '${var.region}'\n" >> /home/ec2-user/webapp/.env
-#     printf "PORT = '3030'\n" >> /home/ec2-user/webapp/.env
-#     printf "filename = 'file'\n" >> /home/ec2-user/webapp/.env
-#     sleep 15
-#     sudo chmod 777 /home/ec2-user/webapp
-#     sudo chmod 777 /home/ec2-user/webapp/uploads
-#     # sudo systemctl enable webapp.service
-#     # sudo systemctl start webapp.service
-#     # sleep 5
-#     sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/cloudwatch-config.json -s
-#     sudo chmod 777 /home/ec2-user/webapp/logs
-#     sleep 15
-#     sudo systemctl enable webapp.service
-#     sudo systemctl start webapp.service
-#     sudo yum install polkit
-#     sudo systemctl restart amazon-cloudwatch-agent.service
-#     sleep 20
-#     sudo systemctl restart webapp.service
-#     sleep 15
-#   EOF
-#   iam_instance_profile        = aws_iam_instance_profile.ec2_profile.name
-#   security_groups             = [aws_security_group.sg.id]
-
-#   root_block_device {
-#     volume_type           = "gp2"
-#     volume_size           = 20
-#     delete_on_termination = true
-#   }
-
-#   lifecycle {
-#     create_before_destroy = true
-#   }
-#   # tags = {
-#   #   Name = "asg_launch_config"
-#   # }
-#   # disable_api_termination = true
-# }
-
 resource "aws_autoscaling_group" "webapp_autoscaling_group" {
   name             = "webapp_autoscaling_group"
   default_cooldown = 60
-  # launch_configuration      = aws_launch_configuration.asg_launch_config.name
   launch_template {
     id      = aws_launch_template.asg_launch_template.id
     version = "$Latest"

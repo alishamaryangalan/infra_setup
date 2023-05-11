@@ -1,0 +1,45 @@
+resource "aws_lb" "application_load_balancer" {
+  name                       = "application-load-balancer"
+  internal                   = false
+  load_balancer_type         = "application"
+  security_groups            = [aws_security_group.load_balancer_security_group.id]
+  subnets                    = aws_subnet.public.*.id
+  enable_deletion_protection = false
+  tags = {
+    Name = "application-loadbalancer"
+  }
+}
+
+resource "aws_lb_target_group" "alb_group" {
+  name        = "webapp-lb-target-group"
+  port        = var.webapp_port
+  protocol    = "HTTP"
+  target_type = "instance"
+  vpc_id      = aws_vpc.vpc_demo.id
+  health_check {
+    port                = var.webapp_port
+    protocol            = "HTTP"
+    interval            = 100
+    timeout             = 50
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    path                = "/healthz"
+    matcher             = "200"
+  }
+}
+
+# resource "aws_autoscaling_attachment" "asg_attachment_bar" {
+#   autoscaling_group_name = aws_autoscaling_group.webapp_autoscaling_group.id
+#   alb_target_group_arn   = aws_lb_target_group.alb_group.arn
+# }
+
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.application_load_balancer.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_lb_target_group.alb_group.arn
+    type             = "forward"
+  }
+}

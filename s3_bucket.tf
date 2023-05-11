@@ -2,7 +2,6 @@ resource "aws_s3_bucket" "private_bucket" {
   bucket        = "s3-bucket-${var.profile}-${var.region}-${uuid()}"
   force_destroy = true
   acl           = "private"
-
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
@@ -26,7 +25,8 @@ resource "aws_s3_bucket" "private_bucket" {
 
 #Block public access for S3 bucket
 resource "aws_s3_bucket_public_access_block" "s3_pub_accessBlock" {
-  bucket             = aws_s3_bucket.private_bucket.id
-  ignore_public_acls = true
+  bucket              = aws_s3_bucket.private_bucket.id
+  block_public_acls   = true
+  block_public_policy = true
 }
 

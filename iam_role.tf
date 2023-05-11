@@ -18,3 +18,7 @@ resource "aws_iam_role" "EC2-CSYE6225" {
 }
 EOF
 }
+resource "aws_iam_role_policy_attachment" "cloudwatch_policy_attachment" {
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  role       = aws_iam_role.EC2-CSYE6225.name
+}

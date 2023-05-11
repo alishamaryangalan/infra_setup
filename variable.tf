@@ -77,3 +77,13 @@ variable "rds_db_name" {
   type    = string
   default = "webapprds"
 }
+
+variable "aws_route53_zone_name" {
+  type    = string
+  default = "alishamaryangalan.me"
+}
+
+variable "aws_route53_record_name" {
+  type    = string
+  default = ""
+}

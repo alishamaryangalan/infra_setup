@@ -45,9 +45,21 @@ resource "aws_instance" "ec2" {
     printf "PORT = '3030'\n" >> /home/ec2-user/webapp/.env
     printf "filename = 'file'\n" >> /home/ec2-user/webapp/.env
     sleep 15
+    sudo chmod 777 /home/ec2-user/webapp
     sudo chmod 777 /home/ec2-user/webapp/uploads
+    # sudo systemctl enable webapp.service
+    # sudo systemctl start webapp.service
+    # sleep 5
+    sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/cloudwatch-config.json -s
+    sudo chmod 777 /home/ec2-user/webapp/logs
+    sleep 15
     sudo systemctl enable webapp.service
     sudo systemctl start webapp.service
+    sudo yum install polkit
+    sudo systemctl restart amazon-cloudwatch-agent.service
+    sleep 20
+    sudo systemctl restart webapp.service
+    sleep 15
   EOF
   tags = {
     Name = "ec2-instance"
